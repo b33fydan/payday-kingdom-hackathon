@@ -265,14 +265,14 @@ export default function SceneViewport() {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-3 sm:px-4 lg:bottom-1/2 lg:translate-y-1/2">
-        <div className="pointer-events-auto w-full max-w-[22rem] rounded-[28px] border border-white/10 bg-black/35 px-3 py-3 shadow-[0_24px_60px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:max-w-none sm:px-4 lg:w-auto">
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
+      <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-3 sm:bottom-5 sm:px-4 lg:inset-x-auto lg:right-5 lg:top-28 lg:bottom-auto lg:px-0 lg:justify-end">
+        <div className="pointer-events-auto w-full max-w-[22rem] rounded-[28px] border border-white/10 bg-black/35 px-3 py-3 shadow-[0_24px_60px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:max-w-[28rem] sm:px-4 lg:w-[20rem] lg:max-w-[20rem]">
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               disabled={!captureScene || battle.isAnimating || isCapturing}
               onClick={handleCapture}
-              className="col-span-2 rounded-2xl bg-amber-300 px-4 py-3 text-xs font-semibold uppercase tracking-[0.22em] text-slate-950 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-amber-200/45 sm:col-span-1"
+              className="col-span-2 rounded-2xl bg-amber-300 px-4 py-3 text-xs font-semibold uppercase tracking-[0.22em] text-slate-950 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-amber-200/45"
             >
               {isCapturing ? 'Capturing...' : 'Capture Kingdom'}
             </button>

@@ -38,10 +38,10 @@ export const KINGDOM_BANNER_MAP = Object.fromEntries(
 
 export const CAMERA_CONFIG = {
   position: [9, 8.25, 8.5],
-  minDistance: 8,
-  maxDistance: 15,
-  minAzimuthAngle: -Math.PI / 5,
-  maxAzimuthAngle: Math.PI / 5,
+  minDistance: 6.4,
+  maxDistance: 19,
+  minAzimuthAngle: -Infinity,
+  maxAzimuthAngle: Infinity,
   minPolarAngle: Math.PI / 4.2,
   maxPolarAngle: Math.PI / 2.3,
 };

@@ -34,6 +34,8 @@ import {
 import { soundManager } from '../../utils/soundManager';
 
 const HERO_CENTER = new THREE.Vector3(0, 0, 1.8);
+const WORLD_SCALE = 1.2;
+const TERRAIN_TILE_SIZE = (0.96 * 0.7) / WORLD_SCALE;
 
 function round(value) {
   return Number(value.toFixed(2));
@@ -345,8 +347,8 @@ function createIslandBase() {
       const worldX = x - (ISLAND_GRID_SIZE - 1) / 2;
       const worldZ = z - (ISLAND_GRID_SIZE - 1) / 2;
       const grassShade = COLORS.grass[(x + z) % COLORS.grass.length];
-      const topCube = createVoxel(worldX, height - 0.4, worldZ, grassShade, 0.96);
-      const underCube = createVoxel(worldX, -1.25, worldZ, '#4b3621', 0.96);
+      const topCube = createVoxel(worldX, height - 0.4, worldZ, grassShade, TERRAIN_TILE_SIZE);
+      const underCube = createVoxel(worldX, -1.25, worldZ, '#4b3621', TERRAIN_TILE_SIZE);
 
       topCube.castShadow = true;
       topCube.receiveShadow = true;
@@ -378,6 +380,8 @@ function createIslandBase() {
     island,
     summary: {
       gridSize: ISLAND_GRID_SIZE,
+      worldScale: WORLD_SCALE,
+      terrainTileSize: round(TERRAIN_TILE_SIZE * WORLD_SCALE),
       terrainVoxels: voxelCount,
       decorations: ['trees', 'rocks'],
       water: true,
@@ -708,7 +712,6 @@ function createParticleCube(color, size) {
       emissiveIntensity: 0.18,
     }),
   );
-  particle.castShadow = true;
   return particle;
 }
 
@@ -1122,29 +1125,37 @@ export default function IslandScene() {
     runtime.destroyed = false;
 
     let renderer;
+    const compactViewport = (container.clientWidth || window.innerWidth) < 960;
+    const pixelRatioCap = compactViewport ? 1.1 : 1.35;
+    const shadowMapSize = compactViewport ? 384 : 768;
 
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      renderer = new THREE.WebGLRenderer({
+        antialias: !compactViewport && window.devicePixelRatio <= 1.5,
+        alpha: false,
+        powerPreference: 'high-performance',
+      });
     } catch (error) {
       setSceneError('WebGL preview unavailable in this browser context.');
       return undefined;
     }
 
     setSceneError('');
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioCap));
     renderer.setClearColor(SCENE_BACKGROUND);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(SCENE_BACKGROUND, 16, 28);
 
-    const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 120);
     camera.position.set(...CAMERA_CONFIG.position);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.enablePan = false;
     controls.target.set(0, 0.25, 0);
     controls.minDistance = CAMERA_CONFIG.minDistance;
     controls.maxDistance = CAMERA_CONFIG.maxDistance;
@@ -1159,7 +1170,7 @@ export default function IslandScene() {
     const sun = new THREE.DirectionalLight('#fff8d6', 2.8);
     sun.position.set(9, 14, 8);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.mapSize.set(shadowMapSize, shadowMapSize);
     sun.shadow.camera.left = -12;
     sun.shadow.camera.right = 12;
     sun.shadow.camera.top = 12;
@@ -1170,8 +1181,12 @@ export default function IslandScene() {
     rim.position.set(-8, 6, -9);
     scene.add(rim);
 
+    const worldRoot = new THREE.Group();
+    worldRoot.scale.setScalar(WORLD_SCALE);
+    scene.add(worldRoot);
+
     const { island, summary } = createIslandBase();
-    scene.add(island);
+    worldRoot.add(island);
 
     const treasuryRoot = new THREE.Group();
     const identityRoot = new THREE.Group();
@@ -1179,7 +1194,7 @@ export default function IslandScene() {
     const monstersRoot = new THREE.Group();
     const heroRoot = new THREE.Group();
     const particlesRoot = new THREE.Group();
-    scene.add(treasuryRoot, identityRoot, growthRoot, monstersRoot, heroRoot, particlesRoot);
+    worldRoot.add(treasuryRoot, identityRoot, growthRoot, monstersRoot, heroRoot, particlesRoot);
 
     runtime.renderer = renderer;
     runtime.scene = scene;
@@ -1200,6 +1215,7 @@ export default function IslandScene() {
     const resize = () => {
       const width = container.clientWidth;
       const height = container.clientHeight;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioCap));
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();

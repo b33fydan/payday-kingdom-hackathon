@@ -69,18 +69,23 @@ export default function LandingHeroScene() {
     }
 
     let renderer;
+    const compactViewport = (container.clientWidth || window.innerWidth) < 960;
+    const pixelRatioCap = compactViewport ? 1.05 : 1.2;
 
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        alpha: false,
+        powerPreference: 'high-performance',
+      });
     } catch {
       setSceneError('WebGL preview unavailable.');
       return undefined;
     }
 
     setSceneError('');
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioCap));
     renderer.setClearColor(SCENE_BACKGROUND);
-    renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -94,8 +99,6 @@ export default function LandingHeroScene() {
 
     const sun = new THREE.DirectionalLight('#fff7d6', 2.3);
     sun.position.set(8, 10, 7);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024);
     scene.add(sun);
 
     const rim = new THREE.DirectionalLight('#93c5fd', 0.8);
@@ -108,6 +111,7 @@ export default function LandingHeroScene() {
     const resize = () => {
       const width = container.clientWidth;
       const height = container.clientHeight;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioCap));
       renderer.setSize(width, height, false);
       camera.aspect = width / Math.max(height, 1);
       camera.updateProjectionMatrix();
@@ -119,7 +123,14 @@ export default function LandingHeroScene() {
     resize();
 
     let frameId = 0;
+    let lastRenderAt = 0;
     const renderFrame = (timestamp) => {
+      if (timestamp - lastRenderAt < 1000 / 30) {
+        frameId = window.requestAnimationFrame(renderFrame);
+        return;
+      }
+
+      lastRenderAt = timestamp;
       root.rotation.y = Math.sin(timestamp * 0.00035) * 0.28 + 0.34;
       hero.position.y = Math.sin(timestamp * 0.0032) * 0.08;
       water.rotation.y = Math.sin(timestamp * 0.00018) * 0.08;
