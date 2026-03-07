@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  font-family: "Inter", sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(54, 83, 52, 0.55), transparent 40%),
+    linear-gradient(180deg, #0f1f12 0%, #081109 100%);
+  color: #f5f7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+@keyframes reward-float {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.95);
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-28px) scale(1.02);
+  }
+}
+
+@keyframes scene-pulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.reward-float {
+  animation: reward-float 1.35s ease-out forwards;
+}
+
+.scene-announcement {
+  animation: scene-pulse 1.4s ease-in-out infinite;
+}
