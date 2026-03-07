@@ -35,9 +35,15 @@ import { soundManager } from '../../utils/soundManager';
 
 const HERO_CENTER = new THREE.Vector3(0, 0, 1.8);
 const WORLD_SCALE = 1.2;
-const TOP_TERRAIN_TILE_SIZE = 0.9;
-const UNDER_TERRAIN_TILE_SIZE = 1.02;
-const PROP_VISUAL_SCALE = 0.82;
+const TOP_TERRAIN_TILE_SIZE = 0.8;
+const TOP_TERRAIN_TILE_HEIGHT_SCALE = 0.78;
+const UNDER_TERRAIN_TILE_SIZE = 0.94;
+const TERRAIN_WAVE_A = 0.045;
+const TERRAIN_WAVE_B = 0.032;
+const TERRAIN_CHECKER = 0.015;
+const LANDSCAPE_PLATEAU_SIZE = ISLAND_GRID_SIZE - 0.1;
+const LANDSCAPE_PLATEAU_HEIGHT = 0.58;
+const PROP_VISUAL_SCALE = 0.69;
 const LOCAL_PROP_SCALE = PROP_VISUAL_SCALE / WORLD_SCALE;
 
 function round(value) {
@@ -55,9 +61,9 @@ function easeOutBack(value) {
 }
 
 function getIslandHeight(x, z) {
-  const waveA = (Math.sin(x * 0.8) + 1) * 0.07;
-  const waveB = (Math.cos(z * 0.75) + 1) * 0.05;
-  const checker = (x + z) % 2 === 0 ? 0.03 : 0;
+  const waveA = (Math.sin(x * 0.8) + 1) * TERRAIN_WAVE_A;
+  const waveB = (Math.cos(z * 0.75) + 1) * TERRAIN_WAVE_B;
+  const checker = (x + z) % 2 === 0 ? TERRAIN_CHECKER : 0;
   return round(waveA + waveB + checker);
 }
 
@@ -224,7 +230,7 @@ function createLandscapePlateau() {
     metalness: 0.02,
   });
   const plateau = new THREE.Mesh(
-    new THREE.BoxGeometry(ISLAND_GRID_SIZE - 0.25, 0.72, ISLAND_GRID_SIZE - 0.25),
+    new THREE.BoxGeometry(LANDSCAPE_PLATEAU_SIZE, LANDSCAPE_PLATEAU_HEIGHT, LANDSCAPE_PLATEAU_SIZE),
     [
       sideMaterial,
       sideMaterial,
@@ -234,7 +240,7 @@ function createLandscapePlateau() {
       sideMaterial,
     ],
   );
-  plateau.position.set(0, -0.62, 0);
+  plateau.position.set(0, -0.7, 0);
   plateau.receiveShadow = true;
   return plateau;
 }
@@ -384,6 +390,8 @@ function createIslandBase() {
       const grassShade = COLORS.grass[(x + z) % COLORS.grass.length];
       const topCube = createVoxel(worldX, height - 0.4, worldZ, grassShade, TOP_TERRAIN_TILE_SIZE);
       const underCube = createVoxel(worldX, -1.25, worldZ, '#4b3621', UNDER_TERRAIN_TILE_SIZE);
+      topCube.scale.y = TOP_TERRAIN_TILE_HEIGHT_SCALE;
+      topCube.position.y -= 0.04;
 
       topCube.castShadow = true;
       topCube.receiveShadow = true;
@@ -419,6 +427,7 @@ function createIslandBase() {
       worldScale: WORLD_SCALE,
       terrainTileSize: round(TOP_TERRAIN_TILE_SIZE * WORLD_SCALE),
       propVisualScale: round(PROP_VISUAL_SCALE),
+      terrainTileHeightScale: round(TOP_TERRAIN_TILE_HEIGHT_SCALE),
       terrainVoxels: voxelCount,
       decorations: ['trees', 'rocks'],
       landscapeFilled: true,
@@ -1187,15 +1196,15 @@ export default function IslandScene() {
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(SCENE_BACKGROUND, 16, 28);
+    scene.fog = new THREE.Fog(SCENE_BACKGROUND, 18, 32);
 
-    const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 120);
+    const camera = new THREE.PerspectiveCamera(CAMERA_CONFIG.fov, 1, 0.1, 120);
     camera.position.set(...CAMERA_CONFIG.position);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.enablePan = false;
-    controls.target.set(0, 0.25, 0);
+    controls.target.set(...CAMERA_CONFIG.target);
     controls.minDistance = CAMERA_CONFIG.minDistance;
     controls.maxDistance = CAMERA_CONFIG.maxDistance;
     controls.minAzimuthAngle = CAMERA_CONFIG.minAzimuthAngle;

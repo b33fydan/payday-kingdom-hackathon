@@ -37,7 +37,9 @@ export const KINGDOM_BANNER_MAP = Object.fromEntries(
 );
 
 export const CAMERA_CONFIG = {
-  position: [9, 8.25, 8.5],
+  fov: 48,
+  position: [10.6, 9.45, 10],
+  target: [0, 0.1, 0],
   minDistance: 6.4,
   maxDistance: 24,
   minAzimuthAngle: -Infinity,
