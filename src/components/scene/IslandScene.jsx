@@ -35,18 +35,24 @@ import {
 } from '../../utils/voxelBuilder';
 import { soundManager } from '../../utils/soundManager';
 
-const HERO_CENTER = new THREE.Vector3(0, 0, 1.8);
+const HERO_GROUND_OFFSET = -0.09;
+const MONSTER_GROUND_OFFSET = -0.08;
+const HERO_CENTER = new THREE.Vector3(0, HERO_GROUND_OFFSET, 1.8);
 const WORLD_SCALE = 1.2;
-const TOP_TERRAIN_TILE_SIZE = 0.8;
-const TOP_TERRAIN_TILE_HEIGHT_SCALE = 0.78;
-const UNDER_TERRAIN_TILE_SIZE = 0.94;
-const TERRAIN_WAVE_A = 0.045;
-const TERRAIN_WAVE_B = 0.032;
-const TERRAIN_CHECKER = 0.015;
+const TOP_TERRAIN_TILE_SIZE = 0.995;
+const TOP_TERRAIN_TILE_HEIGHT_SCALE = 0.58;
+const TOP_TERRAIN_Y_OFFSET = -0.5;
+const UNDER_TERRAIN_TILE_SIZE = 1.02;
+const UNDER_TERRAIN_Y_OFFSET = -1.31;
+const TERRAIN_WAVE_A = 0.024;
+const TERRAIN_WAVE_B = 0.018;
+const TERRAIN_CHECKER = 0.003;
 const LANDSCAPE_PLATEAU_SIZE = ISLAND_GRID_SIZE - 0.1;
 const LANDSCAPE_PLATEAU_HEIGHT = 0.58;
-const PROP_VISUAL_SCALE = 0.69;
+const PROP_VISUAL_SCALE = 0.67;
+const BUILDING_VISUAL_SCALE = 0.65;
 const LOCAL_PROP_SCALE = PROP_VISUAL_SCALE / WORLD_SCALE;
+const LOCAL_BUILDING_SCALE = BUILDING_VISUAL_SCALE / WORLD_SCALE;
 
 function round(value) {
   return Number(value.toFixed(2));
@@ -67,6 +73,12 @@ function getIslandHeight(x, z) {
   const waveB = (Math.cos(z * 0.75) + 1) * TERRAIN_WAVE_B;
   const checker = (x + z) % 2 === 0 ? TERRAIN_CHECKER : 0;
   return round(waveA + waveB + checker);
+}
+
+function getGrassShade(x, z) {
+  const variation = Math.sin(x * 0.55 + z * 0.25) + Math.cos(z * 0.48 - x * 0.18) * 0.7;
+  const normalized = THREE.MathUtils.clamp((variation + 1.7) / 3.4, 0, 0.999);
+  return COLORS.grass[Math.floor(normalized * COLORS.grass.length)];
 }
 
 function disposeObject(object) {
@@ -100,6 +112,11 @@ function clearGroup(group) {
 }
 
 function scaleSceneProp(object, scale = LOCAL_PROP_SCALE) {
+  object.scale.setScalar(scale);
+  return object;
+}
+
+function scaleSceneBuilding(object, scale = LOCAL_BUILDING_SCALE) {
   object.scale.setScalar(scale);
   return object;
 }
@@ -227,9 +244,9 @@ function createFountain(x, z) {
 }
 
 function createLandscapePlateau() {
-  const topMaterial = getSharedMaterial('#3ddc6a', {
-    roughness: 0.88,
-    metalness: 0.02,
+  const topMaterial = getSharedMaterial(COLORS.grass[1], {
+    roughness: 0.96,
+    metalness: 0,
   });
   const sideMaterial = getSharedMaterial('#5b4527', {
     roughness: 0.92,
@@ -299,7 +316,7 @@ function getMonsterLayout(bills) {
       bill,
       position: new THREE.Vector3(
         Math.cos(angle) * radius,
-        0,
+        MONSTER_GROUND_OFFSET,
         Math.sin(angle) * 1.55 - 0.45,
       ),
     };
@@ -348,34 +365,34 @@ function createStageGroup(stage) {
   }
 
   if (stage === 2) {
-    group.add(scaleSceneProp(createBuilding(-1.65, -1.15, 2, 1, 2, '#d6c39c')));
+    group.add(scaleSceneBuilding(createBuilding(-1.65, -1.15, 2, 1, 2, '#d6c39c')));
     group.add(scaleSceneProp(createPathSegment(-0.3, -0.3)));
     group.add(scaleSceneProp(createPathSegment(-0.65, -0.62)));
     group.add(scaleSceneProp(createPathSegment(-1, -0.92)));
   }
 
   if (stage === 3) {
-    group.add(scaleSceneProp(createBuilding(1.85, -1.05, 2, 2, 2, '#ddd6fe')));
+    group.add(scaleSceneBuilding(createBuilding(1.85, -1.05, 2, 2, 2, '#ddd6fe')));
     group.add(scaleSceneProp(createWell(0.15, -1.9)));
     group.add(scaleSceneProp(createFlowerPatch(2.7, -0.4, ['#fb7185', '#facc15', '#86efac'])));
   }
 
   if (stage === 4) {
-    group.add(scaleSceneProp(createBuilding(-2.45, 1.6, 2, 2, 2, '#94a3b8')));
+    group.add(scaleSceneBuilding(createBuilding(-2.45, 1.6, 2, 2, 2, '#94a3b8')));
     group.add(scaleSceneProp(createFenceLine(-3.15, 0.8, 4, true)));
     group.add(scaleSceneProp(createFenceLine(-3.15, 0.8, 4, false)));
     group.add(scaleSceneProp(createPond(1.7, 1.8)));
   }
 
   if (stage === 5) {
-    group.add(scaleSceneProp(createBuilding(0.05, -2.7, 2, 4, 2, '#cbd5e1')));
-    group.add(scaleSceneProp(createBuilding(1.65, -2.55, 1, 2, 1, '#94a3b8')));
+    group.add(scaleSceneBuilding(createBuilding(0.05, -2.7, 2, 4, 2, '#cbd5e1')));
+    group.add(scaleSceneBuilding(createBuilding(1.65, -2.55, 1, 2, 1, '#94a3b8')));
     group.add(scaleSceneProp(createBridge(-0.6, -2.9)));
     group.add(scaleSceneProp(createFlag(1.55, -3.05, '#fbbf24')));
   }
 
   if (stage === 6) {
-    group.add(scaleSceneProp(createBuilding(2.45, 2.2, 2, 3, 2, '#e2e8f0')));
+    group.add(scaleSceneBuilding(createBuilding(2.45, 2.2, 2, 3, 2, '#e2e8f0')));
     group.add(scaleSceneProp(createFountain(-0.95, 2.35)));
     group.add(scaleSceneProp(createCloud(-1.8, -0.5)));
     group.add(scaleSceneProp(createCloud(2.1, 1.1)));
@@ -397,15 +414,15 @@ function createIslandBase() {
       const height = getIslandHeight(x, z);
       const worldX = x - (ISLAND_GRID_SIZE - 1) / 2;
       const worldZ = z - (ISLAND_GRID_SIZE - 1) / 2;
-      const grassShade = COLORS.grass[(x + z) % COLORS.grass.length];
+      const grassShade = getGrassShade(x, z);
       terrainEntriesByShade.get(grassShade).push({
         x: worldX,
-        y: height - 0.44,
+        y: height + TOP_TERRAIN_Y_OFFSET,
         z: worldZ,
       });
       underEntries.push({
         x: worldX,
-        y: -1.25,
+        y: UNDER_TERRAIN_Y_OFFSET,
         z: worldZ,
       });
       voxelCount += 2;
@@ -420,7 +437,10 @@ function createIslandBase() {
 
     const mesh = new THREE.InstancedMesh(
       getSharedBoxGeometry(TOP_TERRAIN_TILE_SIZE, TOP_TERRAIN_TILE_SIZE, TOP_TERRAIN_TILE_SIZE),
-      getSharedMaterial(grassShade),
+      getSharedMaterial(grassShade, {
+        roughness: 0.96,
+        metalness: 0,
+      }),
       entries.length,
     );
     mesh.castShadow = false;
@@ -439,7 +459,10 @@ function createIslandBase() {
 
   const underMesh = new THREE.InstancedMesh(
     getSharedBoxGeometry(UNDER_TERRAIN_TILE_SIZE, UNDER_TERRAIN_TILE_SIZE, UNDER_TERRAIN_TILE_SIZE),
-    getSharedMaterial('#4b3621'),
+    getSharedMaterial('#4b3621', {
+      roughness: 0.98,
+      metalness: 0,
+    }),
     underEntries.length,
   );
   underMesh.castShadow = false;
@@ -481,7 +504,10 @@ function createIslandBase() {
       worldScale: WORLD_SCALE,
       terrainTileSize: round(TOP_TERRAIN_TILE_SIZE * WORLD_SCALE),
       propVisualScale: round(PROP_VISUAL_SCALE),
+      buildingVisualScale: round(BUILDING_VISUAL_SCALE),
       terrainTileHeightScale: round(TOP_TERRAIN_TILE_HEIGHT_SCALE),
+      heroGroundOffset: round(HERO_GROUND_OFFSET),
+      monsterGroundOffset: round(MONSTER_GROUND_OFFSET),
       terrainVoxels: voxelCount,
       decorations: ['trees', 'rocks'],
       landscapeFilled: true,
@@ -690,7 +716,7 @@ function rebuildHero(runtime, state) {
 
   const hero = createHeroForTier(state.armorTier);
   hero.scale.setScalar(LOCAL_PROP_SCALE);
-  hero.position.set(state.heroPosition.x, state.heroPosition.y, state.heroPosition.z);
+  hero.position.set(state.heroPosition.x, state.heroPosition.y + HERO_GROUND_OFFSET, state.heroPosition.z);
   runtime.roots.hero.add(hero);
   runtime.heroGroup = hero;
 }
@@ -751,7 +777,7 @@ function animateMonsterIdle(entry, index, elapsedMs) {
   entry.group.rotation.y = 0;
 
   if (meta.category === 'housing') {
-    entry.group.position.y = entry.basePosition.y + Math.max(0, wave) * 0.02;
+    entry.group.position.y = entry.basePosition.y + Math.max(0, wave) * 0.015;
     entry.group.rotation.y = Math.sin(elapsedMs * 0.0014 + index) * 0.04;
     if (parts.head?.userData.basePosition) {
       parts.head.position.y = parts.head.userData.basePosition.y + Math.abs(wave) * 0.04;
@@ -766,7 +792,7 @@ function animateMonsterIdle(entry, index, elapsedMs) {
   }
 
   if (meta.category === 'utilities') {
-    entry.group.position.y = entry.basePosition.y + wave * 0.07;
+    entry.group.position.y = entry.basePosition.y + wave * 0.05;
     entry.group.rotation.y = Math.sin(elapsedMs * 0.0022 + index) * 0.14;
     ['sparkLeft', 'sparkRight', 'sparkTop'].forEach((key, sparkIndex) => {
       const spark = parts[key];
@@ -780,7 +806,7 @@ function animateMonsterIdle(entry, index, elapsedMs) {
   }
 
   if (meta.category === 'phone') {
-    entry.group.position.y = entry.basePosition.y + 0.14 + wave * 0.09;
+    entry.group.position.y = entry.basePosition.y + 0.08 + wave * 0.06;
     entry.group.rotation.y = elapsedMs * 0.0012 + index * 0.45;
     if (parts.iris?.userData.basePosition) {
       parts.iris.position.x = parts.iris.userData.basePosition.x + Math.sin(elapsedMs * 0.0042) * 0.06;
@@ -792,7 +818,7 @@ function animateMonsterIdle(entry, index, elapsedMs) {
   }
 
   if (meta.category === 'transport') {
-    entry.group.position.y = entry.basePosition.y + Math.max(0, wave) * 0.03;
+    entry.group.position.y = entry.basePosition.y + Math.max(0, wave) * 0.02;
     entry.group.rotation.y = Math.sin(elapsedMs * 0.0018 + index) * 0.08;
     (parts.legs ?? []).forEach((leg, legIndex) => {
       if (!leg?.userData.baseRotation) {
@@ -804,7 +830,7 @@ function animateMonsterIdle(entry, index, elapsedMs) {
   }
 
   if (meta.category === 'food') {
-    entry.group.position.y = entry.basePosition.y + wave * 0.04;
+    entry.group.position.y = entry.basePosition.y + wave * 0.03;
     if (parts.blob?.userData.baseScale) {
       parts.blob.scale.y = parts.blob.userData.baseScale.y - Math.abs(wave) * 0.14;
       parts.blob.scale.x = parts.blob.userData.baseScale.x + Math.abs(wave) * 0.08;
@@ -817,7 +843,7 @@ function animateMonsterIdle(entry, index, elapsedMs) {
   }
 
   if (meta.category === 'insurance') {
-    entry.group.position.y = entry.basePosition.y + 0.1 + wave * 0.08;
+    entry.group.position.y = entry.basePosition.y + 0.06 + wave * 0.05;
     entry.group.rotation.y = Math.sin(elapsedMs * 0.0015 + index) * 0.06;
     ['tailLeft', 'tailCenter', 'tailRight'].forEach((key, tailIndex) => {
       const tail = parts[key];
@@ -830,7 +856,7 @@ function animateMonsterIdle(entry, index, elapsedMs) {
   }
 
   if (meta.category === 'entertainment') {
-    entry.group.position.y = entry.basePosition.y + Math.abs(wave) * 0.11;
+    entry.group.position.y = entry.basePosition.y + Math.abs(wave) * 0.08;
     entry.group.rotation.y = Math.sin(elapsedMs * 0.0032 + index) * 0.24;
     ['hornLeft', 'hornRight'].forEach((key, hornIndex) => {
       const horn = parts[key];
@@ -842,7 +868,7 @@ function animateMonsterIdle(entry, index, elapsedMs) {
     return;
   }
 
-  entry.group.position.y = entry.basePosition.y + wave * 0.05;
+  entry.group.position.y = entry.basePosition.y + wave * 0.04;
   entry.group.rotation.y = Math.sin(elapsedMs * 0.0016 + index) * 0.1;
   ['earLeft', 'earRight'].forEach((key, earIndex) => {
     const ear = parts[key];
@@ -859,7 +885,7 @@ function updateIdleMotion(runtime, state, elapsedMs) {
   }
 
   if (state.heroVisible && runtime.heroGroup) {
-    runtime.heroGroup.position.y = state.heroPosition.y + Math.sin(elapsedMs * 0.0032) * 0.05;
+    runtime.heroGroup.position.y = state.heroPosition.y + HERO_GROUND_OFFSET + Math.sin(elapsedMs * 0.0032) * 0.03;
     runtime.heroGroup.rotation.y = Math.sin(elapsedMs * 0.0018) * 0.08;
   }
 
@@ -1074,14 +1100,14 @@ async function runPaydaySequence(runtime, sceneStateRef) {
     return;
   }
 
-  hero.position.set(HERO_CENTER.x, 4.8, HERO_CENTER.z);
+  hero.position.set(HERO_CENTER.x, HERO_CENTER.y + 4.8, HERO_CENTER.z);
   hero.rotation.set(0, 0, 0);
 
   await queueAnimation(runtime, {
     duration: 520,
     easing: easeOutBack,
     onUpdate: (progress) => {
-      hero.position.set(HERO_CENTER.x, 4.8 * (1 - progress), HERO_CENTER.z);
+      hero.position.set(HERO_CENTER.x, HERO_CENTER.y + 4.8 * (1 - progress), HERO_CENTER.z);
     },
   });
 
@@ -1106,7 +1132,7 @@ async function runPaydaySequence(runtime, sceneStateRef) {
       duration: 420,
       easing: easeOutBack,
       onUpdate: (progress) => {
-        hero.position.y = Math.sin(progress * Math.PI) * 0.45;
+        hero.position.y = HERO_CENTER.y + Math.sin(progress * Math.PI) * 0.45;
       },
       onComplete: () => {
         hero.position.copy(HERO_CENTER);
@@ -1181,7 +1207,7 @@ async function runPaydaySequence(runtime, sceneStateRef) {
     easing: easeOutCubic,
     onUpdate: (progress) => {
       hero.position.lerpVectors(hero.position.clone(), HERO_CENTER, progress);
-      hero.position.y = Math.sin(progress * Math.PI) * 0.55;
+      hero.position.y = HERO_CENTER.y + Math.sin(progress * Math.PI) * 0.55;
     },
     onComplete: () => {
       hero.position.copy(HERO_CENTER);
@@ -1294,8 +1320,8 @@ export default function IslandScene() {
 
     let renderer;
     const compactViewport = (container.clientWidth || window.innerWidth) < 960;
-    const pixelRatioCap = compactViewport ? 1 : 1.25;
-    const shadowMapSize = compactViewport ? 384 : 640;
+    const pixelRatioCap = compactViewport ? 1 : 1.2;
+    const shadowMapSize = compactViewport ? 384 : 512;
 
     try {
       renderer = new THREE.WebGLRenderer({
@@ -1339,10 +1365,10 @@ export default function IslandScene() {
     sun.position.set(9, 14, 8);
     sun.castShadow = true;
     sun.shadow.mapSize.set(shadowMapSize, shadowMapSize);
-    sun.shadow.camera.left = -12;
-    sun.shadow.camera.right = 12;
-    sun.shadow.camera.top = 12;
-    sun.shadow.camera.bottom = -12;
+    sun.shadow.camera.left = -10;
+    sun.shadow.camera.right = 10;
+    sun.shadow.camera.top = 10;
+    sun.shadow.camera.bottom = -10;
     scene.add(sun);
 
     const rim = new THREE.DirectionalLight('#93c5fd', 1.1);

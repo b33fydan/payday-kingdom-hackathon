@@ -160,6 +160,7 @@ export function createBuilding(x, z, width, height, depth, color) {
           color,
           0.95,
         );
+        block.castShadow = false;
         group.add(block);
       }
     }

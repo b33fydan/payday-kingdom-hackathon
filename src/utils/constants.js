@@ -1,5 +1,5 @@
 export const COLORS = {
-  grass: ['#4ade80', '#22c55e', '#16a34a'],
+  grass: ['#55d86d', '#4fd56a', '#48cf65'],
   water: '#3b82f6',
   wood: '#92400e',
   stone: '#9ca3af',
@@ -37,8 +37,8 @@ export const KINGDOM_BANNER_MAP = Object.fromEntries(
 );
 
 export const CAMERA_CONFIG = {
-  fov: 48,
-  position: [10.6, 9.45, 10],
+  fov: 46,
+  position: [10.9, 9.7, 10.6],
   target: [0, 0.1, 0],
   minDistance: 6.4,
   maxDistance: 24,
